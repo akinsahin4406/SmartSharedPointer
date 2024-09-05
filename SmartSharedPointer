@@ -1,0 +1,94 @@
+template<typename T>
+class SmartSharedPointer
+{
+    T *my_ptr;
+    SmartSharedPointer* right_hand_side;
+    
+    public:
+    int count;
+    SmartSharedPointer(T *ptr):
+    count{1}, my_ptr{ptr}
+    {
+    }
+
+    ~SmartSharedPointer()
+    {
+        DecrementCount();
+        if (count <= 0)
+            delete my_ptr;
+
+    }
+
+    SmartSharedPointer(SmartSharedPointer& rhs)
+    {
+        right_hand_side = &rhs;
+        my_ptr = rhs.my_ptr;
+        ++rhs.count;
+        count = rhs.count;
+    }
+
+    SmartSharedPointer& operator = (SmartSharedPointer& rhs)
+    {
+        if (this != &rhs)
+        {
+            if (count <= 1)
+                delete my_ptr;
+            DecrementCount();
+            right_hand_side = &rhs;
+            my_ptr = rhs.my_ptr;
+            ++rhs.count;
+            count = rhs.count;
+        }
+        return *this;
+    }
+
+    SmartSharedPointer(SmartSharedPointer&& rhs)
+    {
+        right_hand_side = &rhs;
+        my_ptr = rhs.my_ptr;
+        count = rhs.count;
+        rhs.my_ptr = nullptr;
+    }
+
+    SmartSharedPointer& operator = (SmartSharedPointer&& rhs)
+    {
+        if (this != &rhs)
+        {
+            if (count <= 1)
+                delete my_ptr;
+            DecrementCount();
+
+            right_hand_side = &rhs;
+            my_ptr = rhs.my_ptr;
+            count = rhs.count;
+            rhs.my_ptr = nullptr;
+        }
+        return *this;
+    }
+
+    void DecrementCount()
+    {
+        --count;
+        if (count <= 0)
+            my_ptr = nullptr;
+        if (right_hand_side)
+            right_hand_side->DecrementCount();
+    }
+
+    T& operator * ()
+    {
+        return *my_ptr;
+    }
+    T* operator -> ()
+    {
+        return my_ptr;
+    }
+
+};
+
+template<typename T, typename... Args> SmartSharedPointer<T>&& make_shared_pointer(Args&&... args)
+{
+    T* rawptr = new T(std::forward<Args>(args)...);
+    SmartSharedPointer<T>* smrptr = new SmartSharedPointer<T>(rawptr);
+    return std::move(*smrptr);
+}
