@@ -86,7 +86,8 @@ class SmartSharedPointer
 
 };
 
-template<typename T, typename... Args> SmartSharedPointer<T>&& make_shared_pointer(Args&&... args)
+template<typename T, typename... Args> 
+SmartSharedPointer<T>&& make_shared_pointer(Args&&... args)
 {
     T* rawptr = new T(std::forward<Args>(args)...);
     SmartSharedPointer<T>* smrptr = new SmartSharedPointer<T>(rawptr);
